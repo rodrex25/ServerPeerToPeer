@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 //sockets
+using libreriaCompartida;
 using System.Net;
 using System.Net.Sockets;
 //serializacion
@@ -14,20 +15,17 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace ServerPeerToPeer
 
 {
-    [Serializable]
-    public class User
-    {
-        public string UserName { get; set; }
-        public string IpAddress { get; set; }
-    }
+   
 
     public class Server
     {
         //socket tcp listener
         TcpListener server;
-        private int port = 5050;
+        private int port = 1234;
+
         //localhost
-        private IPAddress serverIpAddress = IPAddress.Loopback;
+        static string ipv4Address = "192.168.100.14";
+        private IPAddress serverIpAddress = IPAddress.Parse(ipv4Address);
         //
         Dictionary<string, string> users = new Dictionary<string, string>();
 
