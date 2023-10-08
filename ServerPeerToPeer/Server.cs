@@ -11,6 +11,7 @@ using System.Net.Sockets;
 //serializacion
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.CompilerServices;
 
 namespace ServerPeerToPeer
 
@@ -27,7 +28,10 @@ namespace ServerPeerToPeer
         static string ipv4Address = "192.168.100.14";
         private IPAddress serverIpAddress = IPAddress.Parse(ipv4Address);
         //
-        Dictionary<string, string> users = new Dictionary<string, string>();
+        //Dictionary<string, string> users = new Dictionary<string, string>();
+
+        private static List<Node> nodesConnected = new List<Node>();
+
 
         //constructor
         public Server()
@@ -44,9 +48,12 @@ namespace ServerPeerToPeer
                 this.server = new TcpListener(serverIpAddress, port);
                 server.Start();
                 Console.WriteLine("Server> this server is listeting");
+
             }catch (Exception ex)
             {
+
                 Console.WriteLine("Error to connections: " + ex.Message);
+
             }
             
 
@@ -54,37 +61,105 @@ namespace ServerPeerToPeer
 
         public void userConecting()
         {
-
+            
             //get host flow
-            using (TcpClient client = server.AcceptTcpClient())
-            {
+            TcpClient client = server.AcceptTcpClient();
+            Thread clientThread = new Thread(new ParameterizedThreadStart(handleClientConn));
+            clientThread.Start(client);
 
-                Console.WriteLine("Server> client conected");
+        }
 
-                using (NetworkStream stream = client.GetStream())
-                {
-                    //deserializar objeto
-                    IFormatter formatter = new BinaryFormatter();
+        private static void  handleClientConn(Object client) {
 
 
-                    User user = (User)formatter.Deserialize(stream);
+                TcpClient tcpClient = (TcpClient)client;
 
-                    //save user and ip in the dictionary
-                    users[user.UserName] = user.IpAddress;
+                NetworkStream stream = tcpClient.GetStream();
+            try {
+                //deserializar objeto
 
-                    //SHOW CONNECTED USERS
-                    Console.WriteLine("Server> users conected");
+                IFormatter formatter = new BinaryFormatter();
 
-                    foreach (var entry in users) {
 
-                        Console.WriteLine($"Server> Nombre de usuario: {entry.Key}, Dirección IP: {entry.Value}");
-                    }
+                User user = (User)formatter.Deserialize(stream);
+
+                //save user and ip in the list
+                nodesConnected.Add(new Node(user, tcpClient));
+
+                //SHOW CONNECTED USERS
+                Console.WriteLine("Server> user conected");
+
+                Console.WriteLine("user: " + user.UserName + " ip: " + user.IpAddress);
+
+                foreach (Node node in nodesConnected)
+                 {
+                    
+                     Console.WriteLine("Node User: "+node.getUser().UserName);
+                     Console.WriteLine("Node ip: " + node.getUser().IpAddress);
+                    Console.WriteLine("--------------------------------------");
 
                 }
+                 
+                //enviar lista a todos los tcp client conectados
+                sendNodesList(nodesConnected, user);
+
+                /*foreach (TcpClient client1 in connectedNodes)
+                { 
+
+                    Console.WriteLine(client1.Connected);
+
+                }*/
+            }catch(Exception ex) { Console.WriteLine(ex.Message); }
 
 
+
+
+
+
+
+
+        }
+
+        private static void sendNodesList(List<Node> nodesConnected, User user) {
+
+            try {
+
+                foreach (Node node in nodesConnected)
+                {
+
+                    
+
+                    TcpClient client = node.getTcpClient();
+
+                    NetworkStream stream = client.GetStream();
+
+                    IFormatter formatter = new BinaryFormatter();
+
+                        
+
+                    //send serialice object
+
+                        formatter.Serialize(stream, user);
+
+                        Console.WriteLine("lista actualizada");
+
+                    
+
+                    
+
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+
+                Console.WriteLine("Error al enviar la lista de usuarios: " + ex.Message);
 
             }
+
+
+
+
 
 
         }
