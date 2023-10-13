@@ -8,7 +8,7 @@ using System.Net.Sockets;
 
 namespace ServerPeerToPeer
 {
-    internal class Node
+    public class Node
     {
 
         private static User user;

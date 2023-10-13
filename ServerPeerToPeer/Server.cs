@@ -24,7 +24,7 @@ namespace ServerPeerToPeer
         TcpListener server;
         private int port = 1234;
 
-        //localhost
+        //localhost server
         static string ipv4Address = "192.168.100.14";
         private IPAddress serverIpAddress = IPAddress.Parse(ipv4Address);
         //
@@ -63,15 +63,16 @@ namespace ServerPeerToPeer
         {
             
             //get host flow
-            TcpClient client = server.AcceptTcpClient();
+            
             Thread clientThread = new Thread(new ParameterizedThreadStart(handleClientConn));
+            TcpClient client = server.AcceptTcpClient();
             clientThread.Start(client);
 
         }
 
         private static void  handleClientConn(Object client) {
 
-
+                //crea una conexion a ese usuario conectado 
                 TcpClient tcpClient = (TcpClient)client;
 
                 NetworkStream stream = tcpClient.GetStream();
